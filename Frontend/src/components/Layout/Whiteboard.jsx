@@ -1,27 +1,23 @@
-import socket from "../../services/socket";
 import { useRef, useEffect, useState } from "react";
 import {
   Edit3,
   Eraser,
-  Monitor,
-  Layout,
   Film,
   Undo2,
   Trash2,
 } from "lucide-react";
+import ScreenShare from "./ScreenShare";
 
-const Whiteboard = ({ isSharing, isSelfSharing, screenStream }) => {
+const Whiteboard = ({ screenShareRef }) => {
   const canvasRef = useRef(null);
   const scrollAreaRef = useRef(null);
-  const videoRef = useRef(null);
 
+  const [isSharing, setIsSharing] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [activeTool, setActiveTool] = useState("draw");
   const [history, setHistory] = useState([]);
 
-  // Canvas is set up ONCE at a size larger than its visible scroll
-  // wrapper, so .canvas-scroll-area gets real scrollbars. We no longer
-  // resize on window resize, since that would wipe/distort drawings.
+  // Canvas setup
   const setupCanvas = () => {
     const canvas = canvasRef.current;
     const scrollArea = scrollAreaRef.current;
@@ -30,8 +26,6 @@ const Whiteboard = ({ isSharing, isSelfSharing, screenStream }) => {
     const ratio = window.devicePixelRatio || 1;
     const visibleRect = scrollArea.getBoundingClientRect();
 
-    // Virtual whiteboard is 1.4x the visible frame — enough extra
-    // room to scroll around without feeling infinite.
     const width = Math.round(visibleRect.width * 1.4);
     const height = Math.round(visibleRect.height * 1.4);
 
@@ -65,13 +59,6 @@ const Whiteboard = ({ isSharing, isSelfSharing, screenStream }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSharing]);
-
-  // Attach/detach the shared screen stream to the video element for remote viewers
-  useEffect(() => {
-    if (videoRef.current && !isSelfSharing) {
-      videoRef.current.srcObject = isSharing ? screenStream : null;
-    }
-  }, [isSharing, isSelfSharing, screenStream]);
 
   const getCoordinates = (event) => {
     const canvas = canvasRef.current;
@@ -193,24 +180,12 @@ const Whiteboard = ({ isSharing, isSelfSharing, screenStream }) => {
         </button>
       </div>
 
-      {isSharing ? (
-        <div className="screen-share-area">
-          {isSelfSharing ? (
-            <div className="presenting-banner">
-              <Monitor size={48} color="#2563eb" />
-              <h2>You are sharing your screen</h2>
-              <p>Participants in this meeting can see your screen.</p>
-            </div>
-          ) : (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              className="screen-preview"
-            />
-          )}
-        </div>
-      ) : (
+      <ScreenShare
+        ref={screenShareRef}
+        onSharingStateChange={setIsSharing}
+      />
+
+      {!isSharing && (
         <div className="canvas-scroll-area" ref={scrollAreaRef}>
           <canvas
             ref={canvasRef}
