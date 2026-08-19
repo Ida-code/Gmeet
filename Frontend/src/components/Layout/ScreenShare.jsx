@@ -11,21 +11,6 @@ const rtcConfig = {
     { urls: "stun:stun3.l.google.com:19302" },
     { urls: "stun:stun4.l.google.com:19302" },
     { urls: "stun:global.stun.twilio.com:3478" },
-    {
-      urls: "turn:openrelay.metered.ca:80",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:443",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:443?transport=tcp",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
   ],
 };
 
@@ -73,6 +58,12 @@ const ScreenShare = forwardRef(({ onSharingStateChange }, ref) => {
   const startScreenShare = async () => {
     if (isSharing) {
       stopLocalScreenShare();
+      return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      alert("Screen sharing requires an HTTPS connection or localhost. Please deploy your server with HTTPS (SSL).");
+      console.error("getDisplayMedia not supported or context is insecure (non-HTTPS).");
       return;
     }
 

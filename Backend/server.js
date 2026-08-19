@@ -1,6 +1,7 @@
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
+const path = require("path");
 const { Server } = require("socket.io");
 
 const app = express();
@@ -62,6 +63,16 @@ io.on("connection", (socket) => {
             socketId: socket.id
         });
 
+    });
+
+    // ==========================
+    // GET PARTICIPANTS ON DEMAND
+    // ==========================
+    socket.on("get-participants", ({ meetingId }) => {
+        const targetMeetingId = meetingId || socket.meetingId;
+        if (targetMeetingId && meetingParticipants[targetMeetingId]) {
+            socket.emit("participants", meetingParticipants[targetMeetingId]);
+        }
     });
 
     // ==========================
@@ -205,12 +216,26 @@ io.on("connection", (socket) => {
 
 });
 
-app.get("/", (req, res) => {
-    res.send("Server Running...");
+// Serve frontend build static files if present
+const frontendDistPath = path.join(__dirname, "../Frontend/dist");
+app.use(express.static(frontendDistPath));
+
+app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", message: "Server Running..." });
 });
 
-const PORT = 5000;
+// Fallback for SPA routing if serving frontend from backend
+app.get("*", (req, res, next) => {
+    const indexPath = path.join(frontendDistPath, "index.html");
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            res.send("Server Running...");
+        }
+    });
+});
+
+const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-    console.log(`Server running on ${PORT}`);
-});
+    console.log(`Server running on port ${PORT}`);
+});

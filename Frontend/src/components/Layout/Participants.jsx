@@ -10,15 +10,22 @@ const Participants = () => {
 
   useEffect(() => {
     const updateParticipants = (users) => {
-      setParticipants(users);
+      if (Array.isArray(users)) {
+        setParticipants(users);
+      }
     };
 
     socket.on("participants", updateParticipants);
 
+    // Fetch existing participants list immediately upon component mount
+    if (user?.meetingId) {
+      socket.emit("get-participants", { meetingId: user.meetingId });
+    }
+
     return () => {
       socket.off("participants", updateParticipants);
     };
-  }, []);
+  }, [user?.meetingId]);
 
   const muteParticipant = (participant) => {
     socket.emit("mute-user", {
