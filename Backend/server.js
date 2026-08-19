@@ -225,7 +225,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // Fallback for SPA routing if serving frontend from backend
-app.get("*", (req, res, next) => {
+app.get("(.*)", (req, res, next) => {
     const indexPath = path.join(frontendDistPath, "index.html");
     res.sendFile(indexPath, (err) => {
         if (err) {
